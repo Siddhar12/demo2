@@ -3,24 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <title>Google Sign-In</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
-         const supabaseUrl = 'https://hjionmetmiphksnptsso.supabase.co';
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqaW9ubWV0bWlwaGtzbnB0c3NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk4OTIwMjEsImV4cCI6MjA1NTQ2ODAyMX0.-svmO28RlTGJM8iB52wn-MXSAWsUoQeLO5fkERHlWPs';
-        const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <button id="googleSignInBtn">
-        Sign in with Google
-    </button>
+    <button id="googleSignInButton">Sign in with Google</button>
 
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/+esm";
+        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/+esm";
 
-const firebaseConfig = {
+        // Firebase Config
+        const firebaseConfig = {
             apiKey: "AIzaSyAmQVUMKfy-u57SUB8_ysO-tpJ8cRTSnxw",
             authDomain: "avionai-78e83.firebaseapp.com",
             projectId: "avionai-78e83",
@@ -29,77 +24,75 @@ const firebaseConfig = {
             appId: "1:312505114643:web:931ccb4217f42a39cf9fe6",
             measurementId: "G-QBYM2YYLY1"
         };
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 
-// Supabase Configuration
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
 
-// 🔹 Google Sign-In Function
-async function googleSignIn() {
-    try {
-        console.log("Redirecting to Google Sign-In...");
-        await signInWithRedirect(auth, provider);
-    } catch (error) {
-        console.error("Google Sign-In Error:", error);
-    }
-}
+        // Initialize Supabase
+        const supabaseUrl = 'https://hjionmetmiphksnptsso.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqaW9ubWV0bWlwaGtzbnB0c3NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk4OTIwMjEsImV4cCI6MjA1NTQ2ODAyMX0.-svmO28RlTGJM8iB52wn-MXSAWsUoQeLO5fkERHlWPs';
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// 🔹 Handle Redirect Result (After Login)
-async function handleRedirectResult() {
-    try {
-        const result = await getRedirectResult(auth);
-        if (!result || !result.user) {
-            console.warn("No user found after redirect.");
-            return;
+        // 🔹 Google Sign-In Function
+        async function googleSignIn() {
+            try {
+                console.log("Redirecting to Google Sign-In...");
+                await signInWithRedirect(auth, provider);
+            } catch (error) {
+                console.error("Google Sign-In Error:", error);
+            }
         }
 
-        const user = result.user;
-        console.log("✅ Google Sign-In Success:", user);
+        // 🔹 Handle Redirect Result (After Login)
+        async function handleRedirectResult() {
+            try {
+                const result = await getRedirectResult(auth);
+                if (!result || !result.user) {
+                    console.warn("No user found after redirect.");
+                    return;
+                }
 
-        // Save user to Supabase
-        const { data, error } = await supabase
-            .from('profiles')
-            .upsert({
-                id: user.uid,
-                username: user.displayName,
-                email: user.email,
-                created_at: new Date().toISOString()
-            })
-            .select();
+                const user = result.user;
+                console.log("✅ Google Sign-In Success:", user);
 
-        if (error) {
-            console.error("❌ Supabase Save Error:", error);
-            return;
+                // Save user to Supabase
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .upsert({
+                        id: user.uid,
+                        username: user.displayName,
+                        email: user.email,
+                        created_at: new Date().toISOString()
+                    })
+                    .select();
+
+                if (error) {
+                    console.error("❌ Supabase Save Error:", error);
+                    return;
+                }
+
+                console.log("✅ User saved successfully:", data);
+                window.location.href = "https://avion-ai.vercel.app/#";
+            } catch (error) {
+                console.error("❌ Redirect Result Error:", error);
+            }
         }
 
-        console.log("✅ User saved successfully:", data);
-        window.location.href = "https://avion-ai.vercel.app/#";
-    } catch (error) {
-        console.error("❌ Redirect Result Error:", error);
-    }
-}
+        // 🔹 Auto-run when page loads (check redirect result)
+        document.addEventListener("DOMContentLoaded", () => {
+            console.log("📌 Checking Google Sign-In redirect result...");
+            handleRedirectResult();
 
-// 🔹 Auto-run when page loads (check redirect result)
-document.addEventListener("DOMContentLoaded", () => {
-    console.log("📌 Checking Google Sign-In redirect result...");
-    handleRedirectResult();
-
-    // Ensure the button exists before adding event listener
-    const googleSignInBtn = document.getElementById("googleSignInBtn");
-    if (googleSignInBtn) {
-        googleSignInBtn.addEventListener("click", googleSignIn);
-    } else {
-        console.error("❌ googleSignInBtn not found in the DOM.");
-    }
-});
-
-// 🔹 Attach Google Sign-In Button
-document.getElementById("googleSignInBtn").addEventListener("click", googleSignIn);
-
-        // Check for redirect result when page loads
-        handleRedirectResult();
+            // Ensure the button exists before adding event listener
+            const googleSignInBtn = document.getElementById("googleSignInButton");
+            if (googleSignInBtn) {
+                googleSignInBtn.addEventListener("click", googleSignIn);
+            } else {
+                console.error("❌ googleSignInButton not found in the DOM.");
+            }
+        });
     </script>
 </body>
 </html>
