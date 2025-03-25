@@ -78,7 +78,7 @@
                 console.log("🟢 Saving user to Supabase...");
                 const { data, error } = await supabase
                     .from('profiles')
-                    .upsert({
+                    .insert({
                         id: user.uid,
                         username: user.displayName || "Unknown",
                         email: user.email,
