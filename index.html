@@ -85,6 +85,14 @@ async function handleRedirectResult() {
 document.addEventListener("DOMContentLoaded", () => {
     console.log("📌 Checking Google Sign-In redirect result...");
     handleRedirectResult();
+
+    // Ensure the button exists before adding event listener
+    const googleSignInBtn = document.getElementById("googleSignInBtn");
+    if (googleSignInBtn) {
+        googleSignInBtn.addEventListener("click", googleSignIn);
+    } else {
+        console.error("❌ googleSignInBtn not found in the DOM.");
+    }
 });
 
 // 🔹 Attach Google Sign-In Button
