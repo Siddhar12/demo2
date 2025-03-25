@@ -38,19 +38,21 @@
         // 🔹 Google Sign-In Function
         async function googleSignIn() {
             try {
-                console.log("Redirecting to Google Sign-In...");
+                console.log("🔹 Redirecting to Google Sign-In...");
                 await signInWithRedirect(auth, provider);
             } catch (error) {
-                console.error("Google Sign-In Error:", error);
+                console.error("❌ Google Sign-In Error:", error);
             }
         }
 
         // 🔹 Handle Redirect Result (After Login)
         async function handleRedirectResult() {
             try {
+                console.log("🔄 Checking redirect result...");
                 const result = await getRedirectResult(auth);
+                
                 if (!result || !result.user) {
-                    console.warn("No user found after redirect.");
+                    console.warn("⚠️ No user found after redirect. Possibly a first-time login issue.");
                     return;
                 }
 
@@ -58,11 +60,27 @@
                 console.log("✅ Google Sign-In Success:", user);
 
                 // Save user to Supabase
+                await saveUserToSupabase(user);
+
+            } catch (error) {
+                console.error("❌ Redirect Result Error:", error);
+            }
+        }
+
+        // 🔹 Save User to Supabase
+        async function saveUserToSupabase(user) {
+            if (!user.uid || !user.email) {
+                console.error("❌ Missing user data, skipping Supabase save.");
+                return;
+            }
+
+            try {
+                console.log("🟢 Saving user to Supabase...");
                 const { data, error } = await supabase
                     .from('profiles')
                     .upsert({
                         id: user.uid,
-                        username: user.displayName,
+                        username: user.displayName || "Unknown",
                         email: user.email,
                         created_at: new Date().toISOString()
                     })
@@ -73,22 +91,27 @@
                     return;
                 }
 
-                console.log("✅ User saved successfully:", data);
+                console.log("✅ User saved successfully in Supabase:", data);
+
+                // Redirect user after successful login
+                console.log("🔀 Redirecting to dashboard...");
                 window.location.href = "https://avion-ai.vercel.app/#";
+                
             } catch (error) {
-                console.error("❌ Redirect Result Error:", error);
+                console.error("❌ Error saving user to Supabase:", error);
             }
         }
 
         // 🔹 Auto-run when page loads (check redirect result)
-        document.addEventListener("DOMContentLoaded", () => {
-            console.log("📌 Checking Google Sign-In redirect result...");
-            handleRedirectResult();
+        document.addEventListener("DOMContentLoaded", async () => {
+            console.log("📌 Page loaded. Checking authentication status...");
+            await handleRedirectResult();
 
             // Ensure the button exists before adding event listener
             const googleSignInBtn = document.getElementById("googleSignInButton");
             if (googleSignInBtn) {
                 googleSignInBtn.addEventListener("click", googleSignIn);
+                console.log("✅ Sign-in button ready.");
             } else {
                 console.error("❌ googleSignInButton not found in the DOM.");
             }
