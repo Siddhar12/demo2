@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Permissions-Policy" content="interest-cohort=()">
     <title>Google Sign-In</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -43,7 +44,7 @@
                 await signInWithRedirect(auth, googleProvider);
             } catch (error) {
                 console.error("Google Sign-In Error:", error);
-                alert('Sign-in failed. Please check your pop-up settings.');
+                alert('Sign-in failed. Please check your settings.');
             }
         }
 
@@ -71,7 +72,9 @@
                     }
 
                     console.log('User saved successfully:', data);
-                    alert('Signed in successfully!');
+                    
+                    // Redirect to another page after successful login
+                    window.location.href = 'dashboard.html'; // Change to your desired redirect page
                 }
             } catch (error) {
                 console.error("Redirect Result Error:", error);
