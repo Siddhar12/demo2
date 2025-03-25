@@ -3,11 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Google Sign-In</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
-         const supabaseUrl = 'https://hjionmetmiphksnptsso.supabase.co';
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqaW9ubWV0bWlwaGtzbnB0c3NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk4OTIwMjEsImV4cCI6MjA1NTQ2ODAyMX0.-svmO28RlTGJM8iB52wn-MXSAWsUoQeLO5fkERHlWPs';
-        const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
     <button id="googleSignInButton">Sign in with Google</button>
@@ -15,10 +11,14 @@
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
 
         // Supabase Configuration
-    
+        const supabaseUrl = 'https://avionai-78e83.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2aW9uYWktNzhlODMiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcwNzMyMDk4MCwiZXhwIjoyMDIyODk2OTgwfQ.Y2J1kRjz0qlKHAZAvKvmW6eUwNrT0Ayb8mUACFay33Q';
+        
+        // Ensure Supabase is properly initialized
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 
         // Firebase Configuration
         const firebaseConfig = {
@@ -39,35 +39,50 @@
         // Google Sign-In Function
         async function signInWithGoogle() {
             try {
-                const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
-                
-                // Save user to Supabase profiles table
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .upsert({
-                        id: user.uid,
-                        username: user.displayName,
-                        email: user.email,
-                        created_at: new Date().toISOString()
-                    })
-                    .select();
-
-                if (error) {
-                    console.error('Supabase Save Error:', error);
-                    return;
-                }
-
-                console.log('User saved successfully:', data);
-                alert('Signed in successfully!');
+                // Use redirect method instead of popup
+                await signInWithRedirect(auth, googleProvider);
             } catch (error) {
                 console.error("Google Sign-In Error:", error);
-                alert('Sign-in failed');
+                alert('Sign-in failed. Please check your pop-up settings.');
+            }
+        }
+
+        // Handle redirect result
+        async function handleRedirectResult() {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result) {
+                    const user = result.user;
+                    
+                    // Save user to Supabase profiles table
+                    const { data, error } = await supabase
+                        .from('profiles')
+                        .upsert({
+                            id: user.uid,
+                            username: user.displayName,
+                            email: user.email,
+                            created_at: new Date().toISOString()
+                        })
+                        .select();
+
+                    if (error) {
+                        console.error('Supabase Save Error:', error);
+                        return;
+                    }
+
+                    console.log('User saved successfully:', data);
+                    alert('Signed in successfully!');
+                }
+            } catch (error) {
+                console.error("Redirect Result Error:", error);
             }
         }
 
         // Attach event listener
         document.getElementById('googleSignInButton').addEventListener('click', signInWithGoogle);
+
+        // Check for redirect result when page loads
+        handleRedirectResult();
     </script>
 </body>
 </html>
